@@ -42,7 +42,7 @@ export class DepthSlider extends React.Component {
   }
   render(){
    return(
-    <div style={{height:240}}>
+    <div style={{height:170, paddingLeft:10}}>
       <Tooltip title="Depth">
         <Slider
           orientation="vertical"

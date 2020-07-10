@@ -30,8 +30,8 @@ export class App extends React.Component {
             </span>
           </div>
           <div style={{height:300, margin:0, padding:0}} >
-            <Canvas/>
             <InputOverlay/>
+            <Canvas/>
           </div>
           <div>
             <span style={{width:"50%", display:'inline-block'}}>

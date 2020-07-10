@@ -3,31 +3,39 @@ import React from "react";
 export class Canvas extends React.Component {
   constructor(props){
     super(props);
-    this.state = {canvas: null, ctx: null}
+    this.state = {map: null}
   }
   componentDidMount(){
-    const canvas = this.refs.mainCanvas;
-    const ctx = canvas.getContext("2d");
-    this.setState({canvas, ctx});
-    this.props.setCanvas(canvas);
-    //console.log(ctx);
-  }   
+    const mapH = this.refs.mapholder;
+    var map = L.map(mapH);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+        
+    this.setState({map});
+  }
+  
+  click(e){
+    this.move(e);
+    this.props.setClipboard(this.state.BC);
+  }
+  
+  move(e){
+    this.props.setLatitude(e.latlng.lat);
+    this.props.setLongitude(e.latlng.lng);
+    this.state.BC = this.state.getBC(e.latlng.lng,e.latlng.lat);
+    this.props.setBC(this.state.BC);
+  }
+  
   componentDidUpdate(){
-    //Draw map
     const methodColor = {Terzaghi:[200,200,200],Meyerhof:[200,200,0],Hansen:[0,200,200],Vesic:[200,0,200],Teng:[200,0,0],Plasix:[0,200,0],Minimum:[0,0,200]};
-    var i,j;
     var methodC=methodColor[this.props.method];
     var depthX=1-(this.props.depth-1.5)/4.5/2;
     var color='rgb('+methodC[0]*depthX+','+methodC[1]*depthX+','+methodC[2]*depthX+')';
-    const dis = this.props.config.district[this.props.district];
-    const scale = Math.min(400/(dis.geometry.b[2]-dis.geometry.b[0]),300/(dis.geometry.b[3]-dis.geometry.b[1]))/1.35;
-    const xadd = (400-(dis.geometry.b[2]-dis.geometry.b[0])*scale)/2;
-    const yadd = (300-(dis.geometry.b[3]-dis.geometry.b[1])*scale)/2;
-    const U2D = function(x, y){return [(x-dis.geometry.b[0])*scale+xadd,300-(y-dis.geometry.b[1])*scale-yadd]};
-    const D2U = function(x, y){return [(x-xadd)/scale+dis.geometry.b[0],(y-300+yadd)/-scale+dis.geometry.b[1]]};
-    this.props.setD2U(D2U);
-    this.props.setU2D(U2D);
 
+    var i,j;
+    const dis = this.props.config.district[this.props.district];
     var pgroup = [];
     pgroup.push(dis.points);
     for (i in dis.neighbours){
@@ -87,86 +95,31 @@ export class Canvas extends React.Component {
       }
       return intrep;
     }
-    this.props.setGetBC(getBC);
-    var ctx=this.state.ctx;
-    const start=U2D(dis.geometry.b[0],dis.geometry.b[1]);
-    const end=U2D(dis.geometry.b[2],dis.geometry.b[3]);
-    const _startX=Math.floor(start[0]),_startY=Math.floor(start[1]);
-    const _endX=Math.floor(end[0]),_endY=Math.floor(end[1]);
+    this.state.getBC=getBC;
     
-    for(i=0;i<3;i++)
-      for(j=0;j<3;j++)
-        getBC(i,j);
-    
-/*    var canvasData = new ImageData(_endX-_startX,_startY-_endY);
-    function drawPixel (x, y, r, g, b) {
-      x=x-_startX;
-      y=y-_endY;
-      var index = (x + y * (_endX-_startX)) * 4;
-
-      canvasData.data[index + 0] = r;
-      canvasData.data[index + 1] = g;
-      canvasData.data[index + 2] = b;
-      canvasData.data[index + 3] = 255;
-    }*/
-//    function updateCanvas() {
-//      ctx.putImageData(canvasData, 0, 0);
-//    }
-    //console.log(start,end);
-    //for (i=_startX;i<_endX;i++)
-    //  for(j=_endY;j<_startY;j++){
-    //    drawPixel(i,j,0,0,getBC(i,j));
-    //  }
-    //updateCanvas();
-  //console.log(canvasData);
-
-    //-------------------------------
-    ctx.clearRect(0,0,400,300);
-
-    function  drawPolyline(geometry){
-    for (i=0;i<geometry.x.length;i++){
-      var point = U2D(geometry.x[i],geometry.y[i]);
-      if(i){
-        ctx.lineTo(point[0],point[1]);
-      }else{
-        ctx.moveTo(point[0],point[1]);
+    function getPolyline(geometry){
+      var out = [];
+      for (i=0;i<geometry.x.length;i++){
+        var point = [geometry.y[i],geometry.x[i]];
+        out.push(point);
       }
-    }
+      return out;
     }
     
-    //console.log(dis);
-    //const pat = ctx.createPattern(canvasData, 'no-repeat');
-    ctx.beginPath();
-    ctx.fillStyle = color;
-    //ctx.fillStyle = pat;
-    drawPolyline(dis.geometry);
-    ctx.fill();
-    //ctx.putImageData(canvasData,_startX,_endY);
+    if(this.state.map.oldPolyR)
+      this.state.map.oldPolyR.remove();
     
-    //draw neighbours
-    for (i in dis.neighbours){
-      ctx.fillStyle = '#afa';
-      ctx.beginPath();
-      drawPolyline(this.props.config.district[dis.neighbours[i]].geometry);
-      ctx.stroke();      
-    }
-    //console.log(this.props);
-    if(this.props.showLocation){
-      for (i=0;i<dis.points.f.length;i++){
-        if(dis.points.f[i]){
-          ctx.fillStyle = 'rgb(200, 0, o0)';
-          ctx.beginPath();
-          var point = U2D(dis.points.x[i],dis.points.y[i]);
-          ctx.arc(point[0],point[1],2,0,Math.PI*2,true);
-          ctx.fill();
-        }
-      }
-    }
+    var polygon = L.polygon(getPolyline(dis.geometry), {color}).addTo(this.state.map);
+    this.state.map.fitBounds(polygon.getBounds());
+    polygon.on('click',this.click.bind(this));
+    polygon.on('mousemove',this.move.bind(this));
+    
+    this.state.map.oldPolyR=polygon;
   }
+  
   render(props){
     return(
-      <div style={{width:400,height:300,position:"absolute"}}>
-        <canvas ref='mainCanvas' width={400} height={300} style={{position:"absolute",backgroundColor:"#afa"}}/>
+      <div style={{width:400,height:300,position:"absolute"}} ref="mapholder">
       </div>
     )
   }
@@ -185,10 +138,11 @@ const mapStateToProps = state => {
 
 import actionCreater from '../redux/actionCreators.jsx';
 const mapDispatchToProps = dispatch => ({
-  setCanvas: (d) => dispatch(actionCreater.setState('canvas',d)),
-  setD2U: (d) => dispatch(actionCreater.setState('D2U',d)),
-  setU2D: (d) => dispatch(actionCreater.setState('U2D',d)),
   setGetBC: (d) => dispatch(actionCreater.setState('getBC',d)),
+  setClipboard: (d) => dispatch(actionCreater.setState('clipboard',d)),
+  setLatitude: (d) => dispatch(actionCreater.setState('latitude',d)),
+  setLongitude: (d) => dispatch(actionCreater.setState('longitude',d)),
+  setBC: (d) => dispatch(actionCreater.setState('BC',d)),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Canvas);
