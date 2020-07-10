@@ -122,9 +122,11 @@ export class Canvas extends React.Component {
     }
         
     var polygon = L.polygon(getPolyline(dis.geometry), {color}).addTo(this.state.map);
-    this.state.map.fitBounds(polygon.getBounds());
+    var bounds = polygon.getBounds();
+    this.state.map.fitBounds(bounds);
     polygon.on('click',this.click.bind(this));
     polygon.on('mousemove',this.move.bind(this));
+    this.state.map.setMaxBounds(bounds);
     
     this.state.oldPolyR.push(polygon);
   }
