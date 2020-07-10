@@ -23,10 +23,10 @@ export class App extends React.Component {
         <Paper style={{width:410, border: '5px solid blue', backgroundColor:'blue',color:'#fff'}}>
           <div>
             <span style={{width:"50%", display:'inline-block'}}>
-              Latitude: <span>{(this.props.latitude||0).toFixed(4)}</span>
+              Latitude: <span>{(this.props.latitude||0).toFixed(6)}</span>
             </span>
             <span style={{width:"50%", display:'inline-block'}}>
-              Longitude: <span>{(this.props.longitude||0).toFixed(4)}</span>
+              Longitude: <span>{(this.props.longitude||0).toFixed(6)}</span>
             </span>
           </div>
           <div style={{height:300, margin:0, padding:0}} >
