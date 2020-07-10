@@ -8,10 +8,8 @@ export class LocationDisplay extends React.Component {
     super(props);
     var key;
     for (var i in props.config.district){
-      if(props.config.district[i].hasOwnProperty('neighbours')){
         key=i;
         break;
-        }
     }
     //console.log(keys);
     props.setDistrict(key);
@@ -23,7 +21,7 @@ export class LocationDisplay extends React.Component {
   render(){
     var keys = [];
     for (var i in this.props.config.district){
-      if(this.props.config.district[i].hasOwnProperty('neighbours'))
+      //if(this.props.config.district[i].hasOwnProperty('neighbours'))
         keys.push({key:keys.length, value:i});
     }
     

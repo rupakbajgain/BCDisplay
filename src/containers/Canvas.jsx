@@ -29,6 +29,10 @@ export class Canvas extends React.Component {
   }
   
   componentDidUpdate(){
+    for(i in this.state.oldPolyR)
+      this.state.oldPolyR[i].remove();
+    this.state.oldPolyR=[];
+    
     const methodColor = {Terzaghi:[200,200,200],Meyerhof:[200,200,0],Hansen:[0,200,200],Vesic:[200,0,200],Teng:[200,0,0],Plasix:[0,200,0],Minimum:[0,0,200]};
     var methodC=methodColor[this.props.method];
     var depthX=1-(this.props.depth-1.5)/4.5/2;
@@ -36,10 +40,21 @@ export class Canvas extends React.Component {
 
     var i,j;
     const dis = this.props.config.district[this.props.district];
+    
+    if(this.props.showLocation)
+      for (i in dis.points.f){
+        if(dis.points.f[i]){
+          var marker = L.marker([dis.points.y[i], dis.points.x[i]]).addTo(this.state.map);
+          this.state.oldPolyR.push(marker);
+        }
+      }
+    
     var pgroup = [];
     pgroup.push(dis.points);
     for (i in dis.neighbours){
-      pgroup.push(this.props.config.district[dis.neighbours[i]].points);
+      if(this.props.config.district[dis.neighbours[i]]){
+        pgroup.push(this.props.config.district[dis.neighbours[i]].points);
+      }
     }
     //console.log(pgroup);
     const ind = this.props.config.methods.indexOf(this.props.method);
@@ -105,16 +120,13 @@ export class Canvas extends React.Component {
       }
       return out;
     }
-    
-    if(this.state.map.oldPolyR)
-      this.state.map.oldPolyR.remove();
-    
+        
     var polygon = L.polygon(getPolyline(dis.geometry), {color}).addTo(this.state.map);
     this.state.map.fitBounds(polygon.getBounds());
     polygon.on('click',this.click.bind(this));
     polygon.on('mousemove',this.move.bind(this));
     
-    this.state.map.oldPolyR=polygon;
+    this.state.oldPolyR.push(polygon);
   }
   
   render(props){

@@ -49,7 +49,7 @@ def polygonToArray(pol):
         if(i%c==0):
             out['x'].append(format(geom[0][i],'.4f'))
             out['y'].append(format(geom[1][i],'.4f'))
-    out['b'] = pol.bounds
+    #out['b'] = pol.bounds
     return out;
     
 district=list(set(districts))
@@ -97,11 +97,9 @@ while(len(district)):
         #dist=rep1.distance(rep2)
         if(rep1.intersects(rep2)):
             #print(data['DIST_EN'][i])
-            a['neighbours'].append(data['DIST_EN'][i])
             #add neighbours if not in array
-            if not (i in districts):
-                districts.append(i)
-                district.append(i)
+            if (i in districts):
+                a['neighbours'].append(data['DIST_EN'][i])
     #--------------------------------------------------
 
 with open('result.json','w') as f:
